@@ -6,6 +6,8 @@
 # Description:	- Place proxylist .zip files in the proxylists directory,
 #		- Set the proxydefault files settings for the proxychain default conf
 #		- NOTE: Can only do one list per config, more planned later.
+# This work is licensed under a
+# Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License
 #
 # --- BEGIN PROGRAMMING INSTRUCTIONS ---
 # Store all the zip file names in the proxylist directory to an array.
