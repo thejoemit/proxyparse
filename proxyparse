@@ -1,0 +1,78 @@
+#!/bin/bash
+# Title: HMA ProxyLists to Proxychains.conf Converter
+# By: the.joe.mit@gmail.com (0x766663B1)
+# Date: Oct 11th, 2015
+# Version: 0.1 ALPHA
+# Description:	- Place proxylist .zip files in the proxylists directory,
+#		- Set the proxydefault files settings for the proxychain default conf
+#		- NOTE: Can only do one list per config, more planned later.
+#
+# --- BEGIN PROGRAMMING INSTRUCTIONS ---
+# Store all the zip file names in the proxylist directory to an array.
+function getZipLstArray() {
+	proxyzips="$(ls -lah ./proxylists/ | grep 'proxylist' | grep '.zip' | wc -l)"
+	ziplstloop=0
+	while [ $proxyzips -gt $ziplstloop ]; do
+		zipArray[$ziplstloop]="$(ls -lah ./proxylists/ | grep 'proxylist' | grep '.zip' | cut -d' ' -f11 | awk -v lst="$ziplstloop" 'NR>lst' | head -1)"
+		echo " [=] ${zipArray[${ziplstloop}]}"
+		((ziplstloop++))
+	done
+}
+# Extract all the .zip files in the proxylists dir to their own unique temp dir.
+function unzipZipLst() {
+	dirloop=0
+	while [ $proxyzips -gt $dirloop ]; do
+		zip="./proxylists/${zipArray[${dirloop}]}"
+		dir="./proxylists/TEMPXTRACT_$(date +'%s')"
+		unzip $zip -d $dir > /dev/null
+		dirArray[$dirloop]=$dir
+		echo " [+] $dir"
+		sleep 1
+		((dirloop++))
+	done
+}
+# Concatnate the lists in the extracted dirs to one temp list, write to file.
+function extractProxies() {
+	dirCnt="${#dirArray[@]}"
+	echo " [->] What country code is the list being gathered from?"
+        read countrycode
+	echo " [->] What is the list name?"
+	read listname
+	for (( i=0; i<${dirCnt}; i++ )); do
+		Dir="${dirArray[${i}]}"
+		list="${Dir}/${listname}/${countrycode}.txt"
+		cat $list >> temp_proxy_list.txt
+		echo " [->] $list "
+	done
+}
+# Write the Proxy lists to the Proxychains.conf file
+function writeList() {
+	xlist="$(cat temp_proxy_list.txt | wc -l)"
+	cat proxydefault > proxychains.conf
+	for (( p=0; p<${xlist}; p++)); do
+		proxyIP[$p]="$(cat temp_proxy_list.txt | awk -v plst="$p" 'NR>plst' | head -1 | cut -d':' -f1)"
+		proxyPRT[$p]="$(cat temp_proxy_list.txt | awk -v plst="$p" 'NR>plst' | head -1 | cut -d':' -f2)"
+		telIP="${proxyIP[${p}]}"
+		telPRT="${proxyPRT[${p}]}"
+		echo "http ${proxyIP[${p}]} ${proxyPRT[${p}]}" >> proxychains.conf
+	done
+}
+# REMOVE ALL TEMP FILES CREATED
+function rmDirArray() {
+	rmloop=0
+	while [ $dirCnt -gt $rmloop ]; do
+		rmdir="${dirArray[${rmloop}]}"
+		rm -rf $rmdir
+		echo " [-] $rmdir"
+		((rmloop++))
+	done
+	rm temp_proxy_list.txt
+	echo " [-] temp_proxy_list.txt"
+}
+# MAIN
+getZipLstArray
+unzipZipLst
+extractProxies
+writeList
+rmDirArray
+# --- END PROGRAMMING INSTRUCTIONS ---
