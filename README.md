@@ -11,7 +11,6 @@ This will be the header of every .conf produced by the script subsequently.
 1. ~$ mkdir proxylists
 2. --- MOVE ARCHIVES INTO FOLDER ---
 3. ~$ ./proxyparse
-4. profit??
 
 # DISCLAIMER
 
